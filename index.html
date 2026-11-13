@@ -86,6 +86,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
       <label class="chk"><input type="checkbox" data-layer="mezz" checked> ชั้นลอยเดิม</label>
       <label class="chk"><input type="checkbox" data-layer="vehicles" checked> รถและตู้คอนเทนเนอร์</label>
       <label class="chk"><input type="checkbox" data-layer="proposed" checked> พื้นที่ใหม่ตามลายมือ</label>
+      <label class="chk"><input type="checkbox" data-layer="dims"> ขนาดโดยประมาณ (เส้นบอกระยะ)</label>
     </section>
 
     <section>
@@ -128,6 +129,7 @@ const stage=document.getElementById('stage');
 const renderer=new THREE.WebGLRenderer({antialias:true});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
 renderer.localClippingEnabled=true;
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 stage.insertBefore(renderer.domElement,stage.firstChild);
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0xbcd6e6);
@@ -138,8 +140,10 @@ const controls=new THREE.OrbitControls(camera,renderer.domElement);
 controls.target.set(6,5,14);
 controls.enableDamping=true;controls.dampingFactor=.08;
 controls.maxPolarAngle=Math.PI/2.02;controls.minDistance=8;controls.maxDistance=240;
-scene.add(new THREE.HemisphereLight(0xffffff,0x7d8c97,0.62));
-const sun=new THREE.DirectionalLight(0xffffff,0.5);sun.position.set(-60,90,70);scene.add(sun);
+scene.add(new THREE.HemisphereLight(0xffffff,0x7d8c97,0.55));
+const sun=new THREE.DirectionalLight(0xffffff,0.78);sun.position.set(-60,90,70);
+sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.bias=-0.0006;
+Object.assign(sun.shadow.camera,{left:-115,right:115,top:115,bottom:-115,near:10,far:300});scene.add(sun);
 
 /* ---------- helpers ---------- */
 const UB=new THREE.BoxGeometry(1,1,1);
@@ -147,14 +151,17 @@ const mats={};
 function mat(c){return mats[c]||(mats[c]=new THREE.MeshLambertMaterial({color:c}));}
 function box(w,h,d,m,x,y,z,parent){const o=new THREE.Mesh(UB,m);o.scale.set(w,h,d);o.position.set(x,y,z);(parent||scene).add(o);return o;}
 function cyl(r,h,m,x,y,z,parent,rot){const o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,14),m);o.position.set(x,y,z);if(rot)o.rotation.set(rot[0],rot[1],rot[2]);(parent||scene).add(o);return o;}
-const G={};['facade','interior','truss','zones','mezz','vehicles','proposed','labels','yard'].forEach(k=>{G[k]=new THREE.Group();scene.add(G[k]);});
+const UC=new THREE.CylinderGeometry(1,1,1,6),Y_UP=new THREE.Vector3(0,1,0);
+function beam(a,b,r,m,parent){const A=new THREE.Vector3(a[0],a[1],a[2]),B=new THREE.Vector3(b[0],b[1],b[2]),d=B.clone().sub(A),len=d.length();const o=new THREE.Mesh(UC,m);o.scale.set(r,len,r);o.position.copy(A).add(B).multiplyScalar(.5);o.quaternion.setFromUnitVectors(Y_UP,d.normalize());(parent||scene).add(o);return o;}
+function lineSeg(pts,color){return new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color}));}
+const G={};['facade','interior','truss','roofskin','zones','mezz','vehicles','proposed','labels','yard','dims'].forEach(k=>{G[k]=new THREE.Group();scene.add(G[k]);});
 let seed=7;function rnd(){seed=(seed*16807)%2147483647;return seed/2147483647;}
 
 /* ---------- ground and yard ---------- */
 box(900,.2,900,mat(0x8fae8a),0,-.4,0,G.yard);
 box(150,.2,120,mat(0x9c9fa0),0,-.1,32,G.yard);
 box(150,.2,70,mat(0x9c9fa0),0,-.1,-45,G.yard);
-for(let i=0;i<5;i++){const t=new THREE.Group();cyl(.35,3,mat(0x5a4632),0,1.5,0,t);const c=new THREE.Mesh(new THREE.ConeGeometry(2.4,6,10),mat(0x3d7a47));c.position.y=5.5;t.add(c);t.position.set(-82-i*3,0,10+i*9);G.yard.add(t);}
+for(let i=0;i<16;i++){const tr=new THREE.Group(),s=.8+rnd()*.7;cyl(.35,3,mat(0x5a4632),0,1.5,0,tr);const c=new THREE.Mesh(new THREE.ConeGeometry(2.4,6,10),mat(i%3?0x3d7a47:0x4f8a4a));c.position.y=5.5;tr.add(c);tr.scale.setScalar(s);tr.position.set(-80-rnd()*28,0,-10+rnd()*70);G.yard.add(tr);}
 
 /* ---------- main building shell (arched roof) ---------- */
 const prof=new THREE.Shape();
@@ -183,30 +190,36 @@ box(6,5,.2,mat(0xf1f1ee),47,2.5,17.1,G.facade);
 box(6,5,.2,mat(0xf1f1ee),56,2.5,17.1,G.facade);
 box(14,12,26,mat(0xb7c3cb),-37,6,-7,G.facade);
 
-/* ---------- roof structure (visible when the shell is clear) ---------- */
-const lm=new THREE.LineBasicMaterial({color:0x4d5961});
+/* ---------- roof structure: trusses, purlins, roof seams ---------- */
 const archY=x=>{const t=(x+30)/60;return 9+20*t*(1-t);};
-[-17,-7,3,13].forEach(z=>{
-  const p=[];for(let i=0;i<=40;i++){const x=-30+i*1.5;p.push(new THREE.Vector3(x,archY(x)-.7,z));}
-  G.truss.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(p),lm));
-  G.truss.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-30,8.4,z),new THREE.Vector3(30,8.4,z)]),lm));
-  const h=[];for(let x=-27.5;x<=27.5;x+=5){h.push(new THREE.Vector3(x,8.4,z),new THREE.Vector3(x,archY(x)-.7,z));}
-  G.truss.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(h),lm));
+const trussM=mat(0x5d6870),pipeRed=mat(0xc0352b);
+[-20,-10,0,10,20].forEach(z=>{
+  const top=[],bot=[];
+  for(let i=0;i<=20;i++){const x=-30+i*3;top.push([x,archY(x)-.45,z]);bot.push([x,8.0,z]);}
+  for(let i=0;i<20;i++){beam(top[i],top[i+1],.09,trussM,G.truss);
+    if(i%2===0)beam(bot[i],top[i+1],.05,trussM,G.truss);else beam(top[i],bot[i+1],.05,trussM,G.truss);}
+  beam(bot[0],bot[20],.08,trussM,G.truss);
+  for(let i=0;i<=20;i++)beam(bot[i],top[i],.05,trussM,G.truss);
 });
-const pur=[];for(let x=-28;x<=28;x+=4){const y=archY(x)-.7;pur.push(new THREE.Vector3(x,y,-19.5),new THREE.Vector3(x,y,19.5));}
-G.truss.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pur),lm));
+for(let i=0;i<=20;i++){const x=-30+i*3,y=archY(x)-.3;beam([x,y,-20],[x,y,20],.05,trussM,G.truss);}
+const seam=[];for(let x=-30;x<=30;x+=1.5){const y=archY(x)+.04;seam.push(new THREE.Vector3(x,y,-20.05),new THREE.Vector3(x,y,20.05));}
+G.roofskin.add(lineSeg(seam,0x3b9bc0));
 
 /* ---------- interior: floor, columns, lamps ---------- */
 box(60,.12,40,mat(0x7f878b),0,.06,0,G.interior);
 for(const x of [-25,-15,-5,5,15,25])for(const z of [-16,0,16])box(.8,8.8,.8,mat(0xe1e4e5),x,4.4,z,G.interior);
-const lampM=new THREE.MeshBasicMaterial({color:0xfff2c2});const lampG=new THREE.SphereGeometry(.32,8,8);
-for(let x=-25;x<=25;x+=10)for(let z=-15;z<=15;z+=10){const l=new THREE.Mesh(lampG,lampM);l.position.set(x,7.6,z);G.interior.add(l);}
+const lampGlow=new THREE.MeshBasicMaterial({color:0xfff2c2});
+const coneG=new THREE.ConeGeometry(.5,.4,12,1,true),discG=new THREE.CircleGeometry(.36,12),shadeM=new THREE.MeshLambertMaterial({color:0x4a5258,side:THREE.DoubleSide});
+for(let x=-25;x<=25;x+=10)for(let z=-15;z<=15;z+=10){
+  const s=new THREE.Mesh(coneG,shadeM);s.position.set(x,7.5,z);G.interior.add(s);
+  const d=new THREE.Mesh(discG,lampGlow);d.rotation.x=Math.PI/2;d.position.set(x,7.28,z);G.interior.add(d);
+  beam([x,7.7,z],[x,archY(x)-.45,z],.02,trussM,G.interior);}
 
 /* racks along z, blue frame, orange beams, loaded pallets */
 const loadCols=[0xc9a46c,0xe3ddd0,0xb98c55,0xdcd2bd];
 function rack(x,z0,len,depth){
   const bays=Math.floor(len/2.7),lv=3,H=2.0;
-  for(let i=0;i<=bays;i++)for(const dx of [-depth/2,depth/2])box(.12,lv*H+.3,.12,mat(0x1f55b0),x+dx,(lv*H+.3)/2,z0+i*2.7,G.interior);
+  for(let i=0;i<=bays;i++){for(const dx of [-depth/2,depth/2])box(.12,lv*H+.3,.12,mat(0x1f55b0),x+dx,(lv*H+.3)/2,z0+i*2.7,G.interior);beam([x-depth/2,.3,z0+i*2.7],[x+depth/2,lv*H-.2,z0+i*2.7],.025,mat(0x1f55b0),G.interior);}
   for(let l=0;l<lv;l++){
     for(const dx of [-depth/2,depth/2])box(.1,.18,bays*2.7,mat(0xe8742a),x+dx,.4+l*H,z0+bays*1.35,G.interior);
     for(let i=0;i<bays;i++){if(rnd()<.2)continue;
@@ -242,16 +255,14 @@ forklift(-13,6,0,0x1e1e22);
   box(cw,.1,.1,cage,cx0+cw/2,2.4,cz0,G.interior);box(cw,.1,.1,cage,cx0+cw/2,2.4,cz0+cd,G.interior);
   box(.1,.1,cd,cage,cx0,2.4,cz0+cd/2,G.interior);box(.1,.1,cd,cage,cx0+cw,2.4,cz0+cd/2,G.interior);
   box(cw,1.1,.05,new THREE.MeshBasicMaterial({color:0xf2c200,transparent:true,opacity:.35}),cx0+cw/2,.7,cz0+cd,G.interior);
-  cyl(.7,.5,mat(0x2c3338),-9.5,.25,0,G.interior);
-  box(.4,2,.4,mat(0xf5f5f2),-9.5,1.4,0,G.interior).rotation.z=.2;
-  box(.35,1.8,.35,mat(0xf08a3c),-8.6,2.7,0,G.interior).rotation.z=-.9;
+  robot6(-9.5,0,1.15);
   box(10,.9,1.2,mat(0x8f99a0),-9,.5,5.5,G.interior);
   box(10,.2,1.2,mat(0x1d6f8f),-9,1.05,5.5,G.interior);
   box(14,.9,1.2,mat(0x8f99a0),-18,.5,12,G.interior);
   box(14,.2,1.2,mat(0x1d6f8f),-18,1.05,12,G.interior);
   for(let i=0;i<4;i++)box(3,2.6,2.2,mat(0xaab4ba),-27+i*3.4,1.3,16,G.interior);
   for(let i=0;i<3;i++)for(let j=0;j<2;j++)box(1.4,1.9,1.2,mat(0x2f9e57),-4+i*1.5,1,12+j*1.4,G.interior);
-  for(let i=0;i<4;i++){const f=new THREE.Group();cyl(.24,1.2,mat(0x6c4ec2),0,.8,0,f);const h=new THREE.Mesh(new THREE.SphereGeometry(.22,8,8),mat(0xe0b894));h.position.y=1.65;f.add(h);f.position.set(-22+i*3.2,0,8+(i%2)*2.5);G.interior.add(f);}
+  for(let i=0;i<4;i++){const f=new THREE.Group();cyl(.24,1.2,mat(0x6c4ec2),0,.8,0,f);const h=new THREE.Mesh(new THREE.SphereGeometry(.22,8,8),mat(0xe0b894));h.position.y=1.65;f.add(h);f.position.set(-24+i*4,0,10.6+(i%2)*2.8);G.interior.add(f);}
   // pallets of silver sheets on the floor beside the mezzanine
   for(let i=0;i<3;i++)box(1.6,1.5,1.3,mat(0xc8d0d6),-9+i*1.9,.8,-10,G.interior);
 })();
@@ -270,19 +281,111 @@ forklift(-13,6,0,0x1e1e22);
 })();
 
 /* ---------- vehicles ---------- */
+const tyreM=mat(0x14181b),hubM=mat(0xaab2b8);
+function wheel(x,y,z,g){cyl(.52,.4,tyreM,x,y,z,g,[Math.PI/2,0,0]);cyl(.26,.44,hubM,x,y,z,g,[Math.PI/2,0,0]);}
 function truck(x,z,contCol,badge){
-  const g=new THREE.Group();
-  box(12.6,.35,2.5,mat(0x2b5ea8),0,1.05,0,g);
-  box(12.2,2.6,2.4,mat(contCol),0,2.7,0,g);
-  for(let i=-5;i<=5;i++)box(.1,2.5,2.46,mat(contCol===0xdfe5e8?0xc4ccd0:0x8a3a28),i*1.1,2.7,0,g);
-  if(badge)for(const s of [-1,1])box(1.5,1.5,.06,mat(0x3fb0d8),-3.5,2.9,s*1.22,g);
-  box(2.3,2.5,2.4,mat(0x22324a),7.6,1.9,0,g);
-  for(const wx of [-4.6,-3.5,-2.4,6.6])for(const s of [-1,1])cyl(.5,.35,mat(0x14181b),wx,.5,s*1.15,g,[Math.PI/2,0,0]);
+  const g=new THREE.Group(),dark=contCol===0xdfe5e8?0xc1c9ce:0x86372a,blue=mat(0x2b5ea8);
+  for(const s of [-1,1])box(12.6,.3,.25,blue,0,1.0,s*.95,g);
+  for(let i=-5;i<=5;i++)box(.2,.2,2.1,mat(0x244f8e),i*1.2,1.0,0,g);
+  for(const sx of [-5.9,-2.7,2.7,5.9])for(const s of [-1,1])box(.5,.22,.2,mat(0x3a3f44),sx,1.22,s*1.05,g);
+  box(12.2,2.6,2.4,mat(contCol),0,2.55,0,g);
+  const N=24,im=new THREE.InstancedMesh(UB,mat(dark),N*2),dm=new THREE.Object3D();let k=0;
+  for(let i=0;i<N;i++)for(const s of [-1,1]){dm.position.set(-5.8+i*.5,2.55,s*1.22);dm.scale.set(.14,2.5,.08);dm.updateMatrix();im.setMatrixAt(k++,dm.matrix);}
+  g.add(im);
+  box(.06,2.5,2.3,mat(dark),-6.12,2.55,0,g);
+  for(const s of [-.8,.8])cyl(.04,2.4,mat(0x7b8388),-6.18,2.55,s,g);
+  if(badge)for(const s of [-1,1])box(1.5,1.5,.06,mat(0x3fb0d8),-3.5,2.9,s*1.26,g);
+  box(2.6,.5,2.2,mat(0x1c2a3d),8.0,1.1,0,g);
+  box(2.2,2.3,2.3,mat(0x22324a),8.4,2.4,0,g);
+  box(1.4,1.0,2.0,mat(0x22324a),9.9,1.6,0,g);
+  box(.06,.9,1.9,mat(0x7fb7d6),9.52,2.8,0,g);
+  box(.3,.4,2.2,mat(0x9aa2a8),10.75,.9,0,g);
+  for(const s of [-1,1]){box(.08,.25,.4,new THREE.MeshBasicMaterial({color:0xfff2c2}),10.62,1.5,s*.8,g);
+    cyl(.35,1.4,mat(0x9aa2a8),7.3,.9,s*1.3,g,[0,0,Math.PI/2]);
+    cyl(.08,2.2,mat(0x6a747a),7.4,3.2,s*1.1,g);
+    box(.1,.5,.3,mat(0x111),9.2,2.6,s*1.3,g);}
+  cyl(.7,.12,mat(0x4a5258),6.8,1.3,0,g);
+  for(const wx of [-4.6,-3.4,-2.2,7.2,8.6,9.9])for(const s of [-1,1])wheel(wx,.52,s*1.15,g);
   g.position.set(x,0,z);G.vehicles.add(g);
 }
 truck(-17,24,0xa0432d,false);
 truck(-1,24,0xdfe5e8,true);
 truck(-1,29,0xdfe5e8,true);
+
+/* ---------- extra detail: facade, yard, interior ---------- */
+const ribMat=new THREE.MeshLambertMaterial({color:0x16607c});
+function robot6(x,z,s){const g=new THREE.Group();
+  cyl(.65,.35,mat(0x2c3338),0,.18,0,g);cyl(.45,.6,mat(0xf5f5f2),0,.65,0,g);
+  const a=new THREE.Group();a.position.set(0,.95,0);g.add(a);
+  box(.5,.5,.55,mat(0xf08a3c),0,0,0,a);
+  beam([0,0,0],[.2,1.5,0],.17,mat(0xf5f5f2),a);beam([.2,1.5,0],[1.6,1.9,0],.14,mat(0xf08a3c),a);
+  box(.3,.3,.3,mat(0x2c3338),1.7,1.9,0,a);box(.08,.7,.5,mat(0x8b949a),1.85,1.5,0,a);
+  a.rotation.y=.5;g.scale.setScalar(s||1);g.position.set(x,0,z);G.interior.add(g);}
+function machine(x,z,w,d,h){const g=new THREE.Group();
+  box(w,h*.55,d,mat(0xaeb8be),0,h*.275+.5,0,g);
+  for(const sx of [-1,1])for(const sz of [-1,1])box(.12,.5,.12,mat(0x6a747a),sx*(w/2-.15),.25,sz*(d/2-.15),g);
+  box(w*.9,h*.3,d*.9,new THREE.MeshLambertMaterial({color:0x9ed3e6,transparent:true,opacity:.35,depthWrite:false}),0,h*.55+.5+h*.15,0,g);
+  cyl(.4,.8,mat(0xc6ced3),w*.2,h*.85+.9,0,g);
+  box(.7,1.5,.5,mat(0x1d6f8f),w/2+.45,.75,d*.2,g);
+  box(.04,.35,.4,new THREE.MeshBasicMaterial({color:0x7fe0ff}),w/2+.72,1.1,d*.2,g);
+  g.position.set(x,0,z);G.interior.add(g);}
+(function(){
+  const dm=new THREE.Object3D();let k;
+  // corrugated ribs on the front/back gables and side walls
+  const xs=[];for(let x=-29.6;x<=29.6;x+=.75)xs.push(x);
+  const fr=new THREE.InstancedMesh(UB,ribMat,xs.length*2);k=0;
+  xs.forEach(x=>{const h=archY(x);for(const s of [-1,1]){dm.position.set(x,h/2,s*20.05);dm.scale.set(.1,h,.05);dm.updateMatrix();fr.setMatrixAt(k++,dm.matrix);}});
+  fr.count=k;G.facade.add(fr);
+  const sr=new THREE.InstancedMesh(UB,mat(0x16607c),120);k=0;
+  for(let z=-19.6;z<=19.6;z+=.75)for(const s of [-1,1]){dm.position.set(s*30.05,4.5,z);dm.scale.set(.05,9,.1);dm.updateMatrix();sr.setMatrixAt(k++,dm.matrix);}
+  sr.count=k;G.facade.add(sr);
+  // dock doors: slats, bumpers, platforms, lights, canopy braces
+  const flat=new THREE.MeshBasicMaterial({color:0xffe9a8});
+  for(let i=0;i<8;i++){const x=-26.25+i*7.5;
+    for(let j=0;j<7;j++)box(4.4,.05,.06,mat(0x0e1317),x,.6+j*.65,20.24,G.facade);
+    for(const s of [-1,1])box(.35,.6,.35,mat(0x111111),x+s*2.4,1.3,20.3,G.facade);
+    box(4.6,1.2,2.2,mat(0xa8abad),x,.6,21.2,G.facade);
+    box(1.4,.07,.22,flat,x,5.35,22.6,G.facade);
+    beam([x+1.0,8.6,20.3],[x+1.0,5.5,25.4],.04,mat(0x39434c),G.facade);}
+  for(let i=0;i<=8;i++){const b=new THREE.Group();cyl(.14,1.2,mat(0xd23a2e),0,.6,0,b);cyl(.145,.3,mat(0xf5f5f5),0,.9,0,b);b.position.set(-30+i*7.5,0,22.6);G.facade.add(b);}
+  for(const cx of [-9,12]){const c=new THREE.Mesh(new THREE.ConeGeometry(.22,.6,10),mat(0xf08a3c));c.position.set(cx,.3,21.9);G.yard.add(c);}
+  // utility poles and wires
+  const poleM=mat(0x8d8f8b);
+  [[-46,38],[-46,6]].forEach(([px,pz])=>{beam([px,0,pz],[px,11,pz],.22,poleM,G.yard);box(.15,.15,3.6,poleM,px,10.4,pz,G.yard);});
+  for(let w=0;w<3;w++){const o=(w-1)*1.5,pts=[],A=new THREE.Vector3(-46,10.4,38+o),B=new THREE.Vector3(-46,10.4,6+o);
+    for(let i=0;i<=24;i++){const tt=i/24,q=A.clone().lerp(B,tt);q.y-=Math.sin(Math.PI*tt)*1.1;pts.push(q);}
+    G.yard.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:0x222222})));}
+  // yard lamp posts and lane lines
+  [[-72,58],[44,64],[66,40]].forEach(([px,pz])=>{beam([px,0,pz],[px,9,pz],.14,mat(0x555d63),G.yard);box(1.6,.12,.35,mat(0x555d63),px,9.1,pz,G.yard);box(.9,.1,.3,lampGlow,px+.3,9.0,pz,G.yard);});
+  for(let x=-34;x<=10;x+=6)box(.15,.02,9.5,mat(0xe39a3c),x,.03,26,G.yard);
+  // sprinkler pipes
+  for(const x of [-20,0,20])beam([x,7.0,-20],[x,7.0,20],.1,pipeRed,G.interior);
+  for(const z of [-10,10])beam([-30,7.0,z],[30,7.0,z],.08,pipeRed,G.interior);
+  // floor markings
+  for(const dx of [0,.5])box(.12,.02,38,mat(0x2fa66a),-1.7+dx,.135,0,G.interior);
+  for(let x=-29;x<=28;x+=1.6)box(.9,.02,.15,mat(0xf2c200),x,.135,18.2,G.interior);
+  [[1.8,8.1,5.2,.12],[1.8,8.1,11,.12]].forEach(([x0,x1,z,w])=>box(x1-x0,.02,w,mat(0xf2c200),(x0+x1)/2,.135,z,G.interior));
+  [[1.8,5.2,11],[8.1,5.2,11]].forEach(([x,z0,z1])=>box(.12,.02,z1-z0,mat(0xf2c200),x,.135,(z0+z1)/2,G.interior));
+  // machines, bins, crates, fan, robot
+  machine(-27,8,3.4,2.2,2.8);machine(-22.5,8,3.4,2.2,2.8);machine(-18,8,3.4,2.2,2.8);
+  [[-7,9],[-7,11.2],[-4.8,10.1]].forEach(([x,z])=>{box(1.5,1.4,1.0,mat(0xb4bbc0),x,.95,z,G.interior);box(1.55,.12,1.05,mat(0xd0d5d9),x,1.7,z,G.interior);
+    for(const s of [-1,1])for(const q of [-1,1])cyl(.12,.1,tyreM,x+s*.6,.12,z+q*.38,G.interior,[Math.PI/2,0,0]);});
+  for(let i=0;i<3;i++)for(let j=0;j<4;j++)box(.8,.3,.6,mat(0x2f6fdc),-11+i*.9,.3+j*.32,15.5,G.interior);
+  (function(){const g=new THREE.Group();cyl(.3,.08,mat(0x555555),0,.04,0,g);cyl(.03,1.2,mat(0xcfd2d4),0,.65,0,g);cyl(.28,.1,mat(0xf5f5f5),0,1.3,0,g,[Math.PI/2,0,0]);g.position.set(-1,0,-13.5);G.interior.add(g);})();
+  // mezzanine: under-deck beams, staircase, rails, toe boards
+  const my=4.6,mx0=-30,mx1=-10,mz0=-20,mz1=-2;
+  for(let z=mz0+2;z<mz1;z+=4)box(mx1-mx0,.35,.18,mat(0x6f7a82),(mx0+mx1)/2,my-.4,z,G.mezz);
+  const n=14,rise=my/n,run=.42;
+  for(let i=1;i<=n;i++)box(1.2,.1,run,mat(0x7b858c),-27,my-i*rise-.05,mz1+(i-.5)*run,G.mezz);
+  for(const sx of [-27.6,-26.4]){beam([sx,my,mz1],[sx,0,mz1+n*run],.07,mat(0x6a747a),G.mezz);beam([sx,my+1,mz1],[sx,1,mz1+n*run],.03,mat(0x9aa4aa),G.mezz);}
+  box(mx1-mx0,.18,.06,mat(0xf2c200),(mx0+mx1)/2,my+.27,mz1,G.mezz);box(.06,.18,mz1-mz0,mat(0xf2c200),mx1,my+.27,(mz0+mz1)/2,G.mezz);
+  // size annotations
+  const mk=(a,b)=>G.dims.add(lineSeg([new THREE.Vector3(a[0],a[1],a[2]),new THREE.Vector3(b[0],b[1],b[2])],0x10202b));
+  mk([-30,.3,-25],[30,.3,-25]);mk([-30,.3,-26],[-30,.3,-24]);mk([30,.3,-26],[30,.3,-24]);
+  mk([-48,.3,-20],[-48,.3,20]);mk([-49,.3,-20],[-47,.3,-20]);mk([-49,.3,20],[-47,.3,20]);
+  mk([-31.5,0,-23],[-31.5,14,-23]);
+  G.dims.visible=false;
+})();
 
 /* ---------- zone overlays, proposed areas ---------- */
 const zoneObj={};
@@ -325,7 +428,17 @@ function makeLabel(id,text,x,y,z){
   s.scale.set(c.width/38,c.height/38,1);s.position.set(x,y,z);s.renderOrder=20;s.userData.zone=id;
   G.labels.add(s);labelList.push(s);
 }
+function makeTextLabel(text,x,y,z,parent){
+  const c=document.createElement('canvas');c.width=420;c.height=96;const g=c.getContext('2d');
+  g.font='600 40px "IBM Plex Sans Thai",sans-serif';const w=Math.min(410,g.measureText(text).width+50),x0=(c.width-w)/2;
+  g.fillStyle='rgba(255,255,255,.92)';g.fillRect(x0,12,w,72);g.fillStyle='#10202b';g.textBaseline='middle';g.fillText(text,x0+25,49);
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),depthTest:false,transparent:true}));
+  s.scale.set(c.width/42,c.height/42,1);s.position.set(x,y,z);s.renderOrder=20;parent.add(s);
+}
 function buildLabels(){
+  makeTextLabel('กว้างประมาณ 60 ม.',0,1.8,-25,G.dims);
+  makeTextLabel('ลึกประมาณ 40 ม.',-48,1.8,0,G.dims);
+  makeTextLabel('สูงสุดประมาณ 14 ม.',-31.5,15.2,-23,G.dims);
   makeLabel('store','STORE → PACKING',15,11,0);
   makeLabel('prod','พื้นที่ผลิต',-16,8,6);
   makeLabel('mezz','ชั้นลอยเดิม',-20,8.2,-11);
@@ -342,7 +455,8 @@ function setMode(m){
   shellMat.opacity=m==='xray'?.15:1;
   shellMat.depthWrite=m!=='xray';
   shellMat.needsUpdate=true;
-  G.truss.visible=m!=='open';
+  G.truss.visible=m!=='open';G.roofskin.visible=m!=='open';
+  ribMat.clippingPlanes=m==='open'?[clip]:[];ribMat.needsUpdate=true;
   document.querySelectorAll('#modes button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.mode===m)));
 }
 document.querySelectorAll('#modes button').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
@@ -409,6 +523,7 @@ const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   }
   controls.update();renderer.render(scene,camera);
 })();
+scene.traverse(o=>{if(o.isMesh&&o!==shell){const m=o.material;if(!(m.transparent&&m.depthWrite===false)){o.castShadow=true;o.receiveShadow=true;}}});
 setMode('solid');selectZone('store',false);
 </script>
 </body>
