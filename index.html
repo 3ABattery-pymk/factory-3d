@@ -65,7 +65,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 
     <section>
       <h2>ที่ตั้งโดยประมาณ</h2>
-      <p class="loc">อาคารนี้อยู่ด้านเหนือของพื้นที่บริษัท ใกล้ถนนพระราม 2 ซึ่งอยู่ทางขวามือเมื่อยืนหน้าอาคารตามภาพถ่าย ส่วนอาคารอื่นของบริษัทต่อไปทางซ้าย และมีคลองอยู่ด้านหลังอาคาร</p>
+      <p class="loc">โรงงานเดิมหันด้านหน้าออกสู่ลานโล่งซึ่งเป็นส่วนขยายในอนาคต ถนนพระราม 2 อยู่ถัดจากลานออกไปด้านหน้า (ห่างประมาณ 70–80 ม.) มีที่ดินว่างอยู่ข้างลานทางขวามือเมื่อยืนหน้าอาคาร คลอง Tha Raeng อยู่ทางซ้าย ส่วนอาคารอื่นของบริษัทอยู่ด้านหลัง</p>
       <p class="loc"><span class="tag est">ประมาณ</span> อ่านจากพิกัด GPS ของภาพถ่ายภายนอกเทียบกับแผนที่ดาวเทียม ยังไม่ได้ยืนยันกับผู้ที่รู้จักพื้นที่ ระยะห่างจากถนนเป็นการประมาณ</p>
     </section>
 
@@ -125,12 +125,12 @@ const ZONES={
   mezz:{name:'ชั้นลอยเดิม',color:0x9a86f5,img:'I4',view:[-2,22,32],target:[-20,4,-8],
     tags:[['ok','ลายมือในภาพ'],['est','ขนาดโดยประมาณ']],src:'ไฟล์ 3 และ 4 · ถ่าย 13:42 และ 13:46 น.',
     text:'ชั้นลอยเดิมมีราวกันตกตลอดแนว วางแผ่นโลหะซ้อนเป็นตั้งบนพาเลท ด้านล่างเป็นพื้นที่ผลิต เสาคอนกรีตสีขาวต้นใหญ่รับโครงหลังคาเหล็ก'},
-  newstore:{name:'พื้นที่สร้าง STORE ใหม่',color:0xe05fb0,img:'I5',view:[60,30,70],target:[30,3,32],
-    tags:[['ok','ลายมือในภาพ'],['est','ตำแหน่งและขนาดประมาณจากเส้นวง']],src:'ไฟล์ท้าย · ถ่าย 14:04 น.',
-    text:'ลายมือวงลานด้านหน้าอาคารไว้และเขียนว่าพื้นที่สร้าง STORE ใหม่ ในโมเดลแสดงเป็นกล่องโครงลวดเพื่อบอกตำแหน่งคร่าว ๆ'},
-  newload:{name:'พื้นที่ LOADING ใหม่',color:0xb7d94a,img:'I5',view:[-50,26,78],target:[-14,0,38],
-    tags:[['ok','ลายมือในภาพ'],['est','ตำแหน่งและขนาดประมาณจากเส้นวง']],src:'ไฟล์ท้าย · ถ่าย 14:04 น.',
-    text:'ลานคอนกรีตด้านหน้าฝั่งซ้ายตามเส้นวงในภาพถูกระบุเป็นพื้นที่ LOADING ใหม่ ในโมเดลตีช่องจอดรถให้เห็นแนวคิดเท่านั้น'}
+  newstore:{name:'พื้นที่สร้าง STORE ใหม่',color:0xe05fb0,img:'I5',view:[-60,42,140],target:[-105,3,70],
+    tags:[['ok','ลายมือในภาพ'],['ok','วงบนแผนที่'],['est','ขนาดโดยประมาณ']],src:'ไฟล์ท้าย และแผนที่ที่ระบุตำแหน่ง',
+    text:'ลายมือในภาพระบุพื้นที่สร้าง STORE ใหม่ และวงบนแผนที่ดาวเทียมชี้ว่าเป็นลานโล่งกับที่ดินว่างหน้าโรงงานเดิม ติดถนนพระราม 2 ในโมเดลแสดงเป็นกล่องโครงลวดบริเวณนั้น ขนาดเป็นการประมาณ'},
+  newload:{name:'พื้นที่ LOADING ใหม่',color:0xb7d94a,img:'I5',view:[45,34,105],target:[-5,0,48],
+    tags:[['ok','ลายมือในภาพ'],['ok','วงบนแผนที่'],['est','ขนาดโดยประมาณ']],src:'ไฟล์ท้าย และแผนที่ที่ระบุตำแหน่ง',
+    text:'ลานโล่งหน้าอาคารที่วงไว้บนแผนที่ถูกระบุเป็นพื้นที่ LOADING ใหม่ ในโมเดลตีช่องจอดรถให้เห็นแนวคิด ขนาดและจำนวนช่องเป็นการประมาณ'}
 };
 
 /* ---------- renderer, camera, controls ---------- */
@@ -144,9 +144,9 @@ const scene=new THREE.Scene();
 scene.background=new THREE.Color(0xbcd6e6);
 scene.fog=new THREE.Fog(0xbcd6e6,230,560);
 const camera=new THREE.PerspectiveCamera(45,1,0.5,1200);
-camera.position.set(-40,82,140);
+camera.position.set(140,90,-60);
 const controls=new THREE.OrbitControls(camera,renderer.domElement);
-controls.target.set(55,0,2);
+controls.target.set(-20,0,60);
 controls.enableDamping=true;controls.dampingFactor=.08;
 controls.maxPolarAngle=Math.PI/2.02;controls.minDistance=8;controls.maxDistance=330;
 scene.add(new THREE.HemisphereLight(0xffffff,0x7d8c97,0.55));
@@ -169,9 +169,10 @@ let seed=7;function rnd(){seed=(seed*16807)%2147483647;return seed/2147483647;}
 
 /* ---------- ground and yard ---------- */
 box(900,.2,900,mat(0x8fae8a),0,-.4,0,G.yard);
-box(150,.2,120,mat(0x9c9fa0),0,-.1,32,G.yard);
+box(150,.2,126,mat(0x9c9fa0),0,-.1,35,G.yard);
+box(60,.04,80,mat(0xa5a77d),-105,-.23,58,G.yard);
 box(150,.2,18,mat(0x9c9fa0),0,-.1,-19,G.yard);
-for(let i=0;i<16;i++){const tr=new THREE.Group(),s=.8+rnd()*.7;cyl(.35,3,mat(0x5a4632),0,1.5,0,tr);const c=new THREE.Mesh(new THREE.ConeGeometry(2.4,6,10),mat(i%3?0x3d7a47:0x4f8a4a));c.position.y=5.5;tr.add(c);tr.scale.setScalar(s);tr.position.set(-60-rnd()*70,0,98+rnd()*40);G.yard.add(tr);}
+for(let i=0;i<16;i++){const tr=new THREE.Group(),s=.8+rnd()*.7;cyl(.35,3,mat(0x5a4632),0,1.5,0,tr);const c=new THREE.Mesh(new THREE.ConeGeometry(2.4,6,10),mat(i%3?0x3d7a47:0x4f8a4a));c.position.y=5.5;tr.add(c);tr.scale.setScalar(s);tr.position.set(85+rnd()*35,0,-40+rnd()*120);G.yard.add(tr);}
 
 /* ---------- main building shell (arched roof) ---------- */
 const prof=new THREE.Shape();
@@ -365,8 +366,10 @@ function machine(x,z,w,d,h){const g=new THREE.Group();
   for(let w=0;w<3;w++){const o=(w-1)*1.5,pts=[],A=new THREE.Vector3(-46,10.4,38+o),B=new THREE.Vector3(-46,10.4,6+o);
     for(let i=0;i<=24;i++){const tt=i/24,q=A.clone().lerp(B,tt);q.y-=Math.sin(Math.PI*tt)*1.1;pts.push(q);}
     G.yard.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:0x222222})));}
+  // parked cars in the north-west corner of the yard
+  for(let i=0;i<3;i++)for(let j=0;j<6;j++){const c=car([0xd9d9d9,0x2b4a8c,0xb02a2a,0x1c1c1c,0xe0b030][(i+j)%5],4.2);c.position.set(60+i*4.5,.1,36+j*3);c.rotation.y=Math.PI/2;G.yard.add(c);}
   // yard lamp posts and lane lines
-  [[-72,58],[44,64],[66,40]].forEach(([px,pz])=>{beam([px,0,pz],[px,9,pz],.14,mat(0x555d63),G.yard);box(1.6,.12,.35,mat(0x555d63),px,9.1,pz,G.yard);box(.9,.1,.3,lampGlow,px+.3,9.0,pz,G.yard);});
+  [[-72,58],[82,74],[82,20]].forEach(([px,pz])=>{beam([px,0,pz],[px,9,pz],.14,mat(0x555d63),G.yard);box(1.6,.12,.35,mat(0x555d63),px,9.1,pz,G.yard);box(.9,.1,.3,lampGlow,px+.3,9.0,pz,G.yard);});
   for(let x=-34;x<=10;x+=6)box(.15,.02,9.5,mat(0xe39a3c),x,.03,26,G.yard);
   // sprinkler pipes
   for(const x of [-20,0,20])beam([x,7.0,-20],[x,7.0,20],.1,pipeRed,G.interior);
@@ -402,37 +405,38 @@ function car(col,len,h){const g=new THREE.Group();box(1.9,.8,len,mat(col),0,.6,0
   for(const s of [-1,1])for(const q of [-.32,.32])cyl(.32,.25,tyreM,s*.9,.32,q*len,g,[0,0,Math.PI/2]);return g;}
 function truckV(col){const g=new THREE.Group();box(2.5,3,9,mat(col),0,2.1,-1.5,g);box(2.5,2.2,2.2,mat(0x22324a),0,1.7,3.6,g);
   for(const s of [-1,1])for(const q of [-3.5,-1.5,3.4])cyl(.5,.35,tyreM,s*1.15,.5,q,g,[0,0,Math.PI/2]);return g;}
+const ROAD=new THREE.Group();ROAD.rotation.y=-Math.PI/2;G.site.add(ROAD);
 (function(){
   const S=G.site,asph=mat(0x3b4045),conc=mat(0xb9bbbb),white=mat(0xf4f4ef);
-  box(52,.06,380,mat(0x9a9d9b),118,.01,0,S);
+  box(52,.06,380,mat(0x9a9d9b),118,.01,0,ROAD);
   [[101,10],[115,14],[133,14]].forEach(([cx,w])=>box(w,.1,380,asph,cx,.05,0,S));
-  box(2,.8,380,conc,107,.4,0,S);
-  box(4,.5,380,mat(0x6f9d6a),124,.25,0,S);
+  box(2,.8,380,conc,107,.4,0,ROAD);
+  box(4,.5,380,mat(0x6f9d6a),124,.25,0,ROAD);
   [97,105,108.5,121.5,126.5,139.5].forEach(x=>box(.15,.02,380,white,x,.115,0,S));
   const dm=new THREE.Object3D(),lanes=[101,112.7,117.3,130.7,135.3],dash=new THREE.InstancedMesh(UB,white,lanes.length*62);let k=0;
   lanes.forEach(x=>{for(let z=-180;z<=180;z+=6){dm.position.set(x,.115,z);dm.scale.set(.15,.02,2.5);dm.updateMatrix();dash.setMatrixAt(k++,dm.matrix);}});
-  dash.count=k;S.add(dash);
-  for(let z=-165;z<=165;z+=30){beam([124,0,z],[124,9,z],.12,mat(0x555d63),S);box(7,.12,.3,mat(0x555d63),124,9.1,z,S);}
+  dash.count=k;ROAD.add(dash);
+  for(let z=-165;z<=165;z+=30){beam([124,0,z],[124,9,z],.12,mat(0x555d63),ROAD);box(7,.12,.3,mat(0x555d63),124,9.1,z,ROAD);}
   // gantry for the road sign
   const gz=-34,gm=mat(0x6a747a);
-  beam([106.5,0,gz],[106.5,7.6,gz],.2,gm,S);beam([141,0,gz],[141,7.6,gz],.2,gm,S);beam([106.5,7.4,gz],[141,7.4,gz],.18,gm,S);
+  beam([106.5,0,gz],[106.5,7.6,gz],.2,gm,ROAD);beam([141,0,gz],[141,7.6,gz],.2,gm,ROAD);beam([106.5,7.4,gz],[141,7.4,gz],.18,gm,ROAD);
   // traffic: left-hand driving; WSW-bound (-z) on the near carriageway, ENE-bound (+z) on the far one
   const cols=[0xd9d9d9,0x2b4a8c,0xb02a2a,0x1c1c1c,0xe0b030,0x3d7a47,0xf0f0f0];let ci=0;
   [[110.4,-1],[115,-1],[119.6,-1],[128.4,1],[133,1],[137.6,1],[99,-1],[103,1]].forEach(([x,dir],i)=>{
     const n=i<6?3:1;
     for(let j=0;j<n;j++){const big=(i+j)%4===2,g=big?truckV([0xc9a46c,0x2f6fdc,0xe0e0e0][j%3]):car(cols[ci++%cols.length],4.2);
-      g.position.set(x,.1,-170+j*115+i*13);g.rotation.y=dir>0?0:Math.PI;S.add(g);traffic.push({g,dir,speed:(i<6?14:7)+j*2.5});}});
+      g.position.set(x,.1,-170+j*115+i*13);g.rotation.y=dir>0?0:Math.PI;ROAD.add(g);traffic.push({g,dir,speed:(i<6?14:7)+j*2.5});}});
   // canal behind the building
-  box(200,.05,34,mat(0x4e8199),-10,-.28,-45,G.yard);
+  box(30,.05,150,mat(0x4e8199),140,-.28,16,G.yard);
   // neighbouring halls of the compound (towards the south-south-east)
   function hall(x0,x1,z0,z1,h,col){box(x1-x0,h,z1-z0,mat(col),(x0+x1)/2,h/2,(z0+z1)/2,S);
     box(x1-x0-1,.2,z1-z0-1,mat(0x1f3150),(x0+x1)/2,h+.1,(z0+z1)/2,S);
     const pts=[];for(let x=x0+2;x<x1-1;x+=3)pts.push(new THREE.Vector3(x,h+.22,z0+.8),new THREE.Vector3(x,h+.22,z1-.8));
     for(let z=z0+3;z<z1-1;z+=3)pts.push(new THREE.Vector3(x0+.8,h+.22,z),new THREE.Vector3(x1-.8,h+.22,z));
     S.add(lineSeg(pts,0x5a7aa8));}
-  hall(-112,-54,-52,-4,11,0xaeb6bb);hall(-112,-54,6,56,9,0xb6bcc0);
-  // compass arrow on the yard, pointing north (north = +x and slightly +z in model axes)
-  const n=new THREE.Vector3(.94,0,.342),a=new THREE.Vector3(-46,.3,72),b=a.clone().add(n.clone().multiplyScalar(14));
+  hall(-125,-50,-95,-35,11,0xaeb6bb);hall(-35,60,-100,-40,9,0xb6bcc0);
+  // compass arrow on the yard, pointing north (north = +z and slightly -x in model axes)
+  const n=new THREE.Vector3(-.342,0,.94),a=new THREE.Vector3(55,.3,64),b=a.clone().add(n.clone().multiplyScalar(14));
   beam([a.x,a.y,a.z],[b.x,b.y,b.z],.25,mat(0xd23a2e),S);
   const tip=new THREE.Mesh(new THREE.ConeGeometry(.9,2.6,8),mat(0xd23a2e));tip.position.copy(b);tip.quaternion.setFromUnitVectors(Y_UP,n);S.add(tip);
 })();
@@ -450,10 +454,10 @@ function floorZone(id,x0,x1,z0,z1,y,parent,opacity){
 floorZone('store',1,29,-19,19,.2,G.zones);
 floorZone('prod',-29,-2,-19,19,.2,G.zones);
 floorZone('mezz',-30,-10,-20,-2,4.85,G.zones,.35);
-floorZone('newload',-34,8,32,48,.15,G.proposed,.28);
+floorZone('newload',-40,30,30,66,.15,G.proposed,.28);
 // proposed new store as a dashed wire volume
 (function(){
-  const x0=14,x1=44,z0=24,z1=44,h=8,w=x1-x0,d=z1-z0,c=ZONES.newstore.color;
+  const x0=-128,x1=-82,z0=50,z1=92,h=9,w=x1-x0,d=z1-z0,c=ZONES.newstore.color;
   const bg=new THREE.BoxGeometry(w,h,d);
   const m=new THREE.Mesh(bg,new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:.14,depthWrite:false}));
   m.position.set((x0+x1)/2,h/2,(z0+z1)/2);m.userData.zone='newstore';G.proposed.add(m);
@@ -461,7 +465,7 @@ floorZone('newload',-34,8,32,48,.15,G.proposed,.28);
   e.computeLineDistances();e.position.copy(m.position);G.proposed.add(e);
   zoneObj.newstore={mesh:m,base:.14,center:new THREE.Vector3((x0+x1)/2,0,(z0+z1)/2)};
 })();
-for(let i=0;i<=7;i++)box(.18,.02,11,mat(0xf4f4ef),-32+i*5.5,.2,40,G.proposed);
+for(let i=0;i<=9;i++)box(.18,.02,24,mat(0xf4f4ef),-37+i*7.5,.2,48,G.proposed);
 
 /* ---------- labels ---------- */
 const labelList=[];
@@ -494,22 +498,22 @@ function roadSign(x,rotY){
   g.font='600 62px "IBM Plex Sans Thai",sans-serif';g.fillText('ถนนพระรามที่ 2',320,66);
   g.font='600 40px "IBM Plex Sans Thai",sans-serif';g.fillText('ทางหลวงหมายเลข 35',320,129);
   const m=new THREE.Mesh(new THREE.PlaneGeometry(10,2.8),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c)}));
-  m.position.set(x,5.9,-34);m.rotation.y=rotY;G.site.add(m);
+  m.position.set(x,5.9,-34);m.rotation.y=rotY;ROAD.add(m);
 }
 function buildLabels(){
   roadSign(115,0);roadSign(133,Math.PI);
-  makeTextLabel('ถนนพระราม 2 (ทางหลวง 35)',118,12,6,G.site,2.2);
-  makeTextLabel('คลอง Tha Raeng',40,3,-45,G.site,1.8);
-  makeTextLabel('อาคารอื่นของ AAI (ประมาณ)',-83,16,-28,G.site,1.8);
-  makeTextLabel('เหนือ',-46+.94*19,3,72+.342*19,G.site,1.8);
+  makeTextLabel('ถนนพระราม 2 (ทางหลวง 35)',-6,12,118,G.site,2.2);
+  makeTextLabel('คลอง Tha Raeng',140,3,16,G.site,1.8);
+  makeTextLabel('อาคารอื่นของ AAI (ประมาณ)',-85,16,-65,G.site,1.8);
+  makeTextLabel('เหนือ',55-.342*19,3,64+.94*19,G.site,1.8);
   makeTextLabel('กว้างประมาณ 60 ม.',0,1.8,-25,G.dims);
   makeTextLabel('ลึกประมาณ 40 ม.',-48,1.8,0,G.dims);
   makeTextLabel('สูงสุดประมาณ 14 ม.',-31.5,15.2,-23,G.dims);
   makeLabel('store','STORE → PACKING',15,11,0);
   makeLabel('prod','พื้นที่ผลิต',-16,8,6);
   makeLabel('mezz','ชั้นลอยเดิม',-20,8.2,-11);
-  makeLabel('newstore','STORE ใหม่',29,10,34);
-  makeLabel('newload','LOADING ใหม่',-13,5,40);
+  makeLabel('newstore','STORE ใหม่',-105,11,71);
+  makeLabel('newload','LOADING ใหม่',-5,5,48);
 }
 Promise.race([document.fonts?document.fonts.load('600 46px "IBM Plex Sans Thai"','ก'):Promise.resolve(),new Promise(r=>setTimeout(r,1500))]).then(buildLabels,buildLabels);
 
@@ -532,7 +536,7 @@ document.querySelectorAll('[data-layer]').forEach(i=>i.addEventListener('change'
 }));
 let tween=null;
 function flyTo(pos,tgt){tween={p:new THREE.Vector3(...pos),t:new THREE.Vector3(...tgt)};}
-const VIEWS={site:[[-40,82,140],[55,0,2]],outside:[[-48,14,74],[6,5,14]],inside:[[0,5.5,18.5],[-18,3,-8]],top:[[0,125,2],[0,0,0]]};
+const VIEWS={site:[[140,90,-60],[-20,0,60]],outside:[[-48,14,74],[6,5,14]],inside:[[0,5.5,18.5],[-18,3,-8]],top:[[0,125,2],[0,0,0]]};
 document.querySelectorAll('#views button').forEach(b=>b.addEventListener('click',()=>{
   const v=VIEWS[b.dataset.view];flyTo(v[0],v[1]);
   if(b.dataset.view==='inside')setMode('solid');
