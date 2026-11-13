@@ -133,7 +133,7 @@ const ZONES={
     text:'กรอบสี่เหลี่ยมสีเหลืองบนแผนที่ถัดจากพื้นที่ STORE ใหม่ออกไปทางถนน ถูกระบุเป็นพื้นที่ LOADING ใหม่ ในโมเดลวาดเป็นสี่เหลี่ยมผืนผ้าให้ขอบขนานกับพื้นที่ STORE ใหม่ ขนาดเป็นการประมาณ'},
   mezzext:{name:'ชั้นลอยต่อเติม (ใหม่)',color:0xf2c200,img:'I2',view:[-3,19,26],target:[-17,3,3],
     tags:[['ok','ลายมือในภาพ'],['est','ขนาดโดยประมาณ']],src:'ไฟล์ 2 · ถ่าย 13:43 น.',
-    text:'กรอบเหลืองที่วงไว้ในพื้นที่ผลิตจะต่อเติมเป็นชั้นลอยเพิ่มจากชั้นลอยเดิม ในโมเดลแสดงเป็นแผ่นพื้นสี่เหลี่ยมผืนผ้าต่อจากขอบชั้นลอยเดิมด้านหน้า มีเสารับ ใต้ชั้นลอยมีเครื่องจักรอยู่ ความกว้างเท่าชั้นลอยเดิม ความลึกและความสูงเป็นการประมาณ'}
+    text:'กรอบเหลืองที่วงไว้ในพื้นที่ผลิตจะต่อเติมเป็นชั้นลอยเพิ่มจากชั้นลอยเดิม ในโมเดลแสดงเป็นแผ่นพื้นสี่เหลี่ยมผืนผ้าต่อจากขอบชั้นลอยเดิมด้านหน้า ยื่นยาวต่อจากชั้นลอยเดิมมาตลอดแนวพื้นที่ผลิตจนถึงด้านหน้าอาคาร มีเสารับ ใต้ชั้นลอยมีเครื่องจักรอยู่ ความกว้างเท่าชั้นลอยเดิม เพิ่มเฉพาะความยาว ขนาดเป็นการประมาณ'}
 };
 
 /* ---------- renderer, camera, controls ---------- */
@@ -477,12 +477,12 @@ function centroid(P){let x=0,z=0;P.forEach(q=>{x+=q[0];z+=q[1];});return [x/P.le
 
 // proposed mezzanine extension (yellow rectangle in the production area)
 (function(){
-  const x0=-25,x1=-8.33,z0=-1.67,z1=10,y=3.83,c=ZONES.mezzext.color,w=x1-x0,d=z1-z0;
+  const x0=-25,x1=-8.33,z0=-1.67,z1=15.5,y=3.83,c=ZONES.mezzext.color,w=x1-x0,d=z1-z0;
   const m=new THREE.Mesh(new THREE.BoxGeometry(w,.3,d),new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:.45,depthWrite:false}));
   m.position.set((x0+x1)/2,y,(z0+z1)/2);m.userData.zone='mezzext';G.proposed.add(m);
   const e=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(w,.3,d)),new THREE.LineDashedMaterial({color:c,dashSize:.8,gapSize:.5}));
   e.computeLineDistances();e.position.copy(m.position);G.proposed.add(e);
-  [[x0+.4,z1-.4],[x1-.4,z1-.4],[(x0+x1)/2,z1-.4]].forEach(([px,pz])=>box(.3,y,.3,mat(0xf2c200),px,y/2,pz,G.proposed));
+  [[x0+.4,z1-.4],[x1-.4,z1-.4],[(x0+x1)/2,z1-.4],[x0+.4,(z0+z1)/2+2],[x1-.4,(z0+z1)/2+2]].forEach(([px,pz])=>box(.3,y,.3,mat(0xf2c200),px,y/2,pz,G.proposed));
   const rl=[[x0,z1],[x1,z1],[x1,z0]].map(q=>new THREE.Vector3(q[0],y+1,q[1]));
   G.proposed.add(lineSeg([rl[0],rl[1],rl[1],rl[2]],c));
   zoneObj.mezzext={mesh:m,base:.45,center:new THREE.Vector3((x0+x1)/2,y,(z0+z1)/2)};
@@ -534,7 +534,7 @@ function buildLabels(){
   makeLabel('prod','พื้นที่ผลิต',-6,5.2,9);
   makeLabel('mezz','ชั้นลอยเดิม',-16.7,6.8,-9.2);
   makeLabel('newstore','STORE ใหม่',4.2,11,36.5);
-  makeLabel('mezzext','ชั้นลอยต่อเติม',-19,6.2,4);
+  makeLabel('mezzext','ชั้นลอยต่อเติม',-19,6.2,8);
   makeLabel('newload','LOADING ใหม่',4.6,5,61.6);
 }
 Promise.race([document.fonts?document.fonts.load('600 46px "IBM Plex Sans Thai"','ก'):Promise.resolve(),new Promise(r=>setTimeout(r,1500))]).then(buildLabels,buildLabels);
