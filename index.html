@@ -432,7 +432,7 @@ const ROAD=new THREE.Group();ROAD.rotation.y=-Math.PI/2;G.site.add(ROAD);
     for(let j=0;j<n;j++){const big=(i+j)%4===2,g=big?truckV([0xc9a46c,0x2f6fdc,0xe0e0e0][j%3]):car(cols[ci++%cols.length],4.2);
       g.position.set(x,.1,-170+j*115+i*13);g.rotation.y=dir>0?0:Math.PI;ROAD.add(g);traffic.push({g,dir,speed:(i<6?14:7)+j*2.5});}});
   // canal on the west side (from the satellite map)
-  (function(){const L=[[183.3,108],[202.8,66.1],[208.8,-36.3],[219.2,-127.1],[223.9,-211.0],[213.5,-282.6]],R=[[138.8,108],[153.5,48.4],[163.5,-52.2],[172.0,-139.1],[180.7,-221.1],[166.1,-304.2]];flatPoly(L.concat(R.slice().reverse()),-.28,0x3f7fa6,G.yard);})();
+  (function(){const L=[[199.3,108],[218.8,66.1],[224.8,-36.3],[235.2,-127.1],[239.9,-211.0],[229.5,-282.6]],R=[[154.8,108],[169.5,48.4],[179.5,-52.2],[188.0,-139.1],[196.7,-221.1],[182.1,-304.2]];flatPoly(L.concat(R.slice().reverse()),-.28,0x3f7fa6,G.yard);})();
   // other AAI buildings as simple blocks, placed from the satellite map (scale 50 m = factory width)
   const BL=[["G",[[138.2,82.0],[60.8,84.0],[56.2,-5.5],[141.7,-9.6]],11,11450043,0],["H1",[[145.5,-23.1],[76.5,-15.4],[68.9,-145.5],[140.4,-153.5]],10,11975872,1],["H2",[[148.6,-140.2],[68.8,-143.1],[56.7,-315.8],[138.7,-307.1],[143.2,-238.2]],10,11975872,1],["M",[[28.2,-27.8],[-4.8,-34.2],[2.3,-96.9],[20.8,-179.3],[57.5,-212.8],[55.1,-144.6]],10,11581372,1],["J",[[-27.5,-5.4],[-57.8,-3.9],[-62.4,-164.7],[10.6,-246.1],[25.5,-236.9],[16.2,-143.2]],11,11450043,1],["K",[[29.6,-256.5],[-59.8,-254.3],[-45.1,-307.3],[15.1,-308.5]],9,13222837,0],["Q",[[-111.0,18.6],[-150.5,7.8],[-142.8,-19.7],[-101.6,-10.5]],7,13222837,0]];
   BL.forEach(([nm,pts,h,col,solar])=>{blockPoly(pts,h,col,S);if(solar){const r=blockPoly(pts,.25,0x3b5578,S);r.position.y=h+.02;}});
@@ -508,7 +508,7 @@ function roadSign(x,rotY){
 function buildLabels(){
   roadSign(115,0);roadSign(133,Math.PI);
   makeTextLabel('ถนนพระราม 2 (ทางหลวง 35)',-6,12,118,G.site,2.2);
-  makeTextLabel('คลอง Tha Raeng',196,3,-133,G.site,1.8);
+  makeTextLabel('คลอง Tha Raeng',212,3,-133,G.site,1.8);
   makeTextLabel('อาคารอื่นของ AAI (บล็อกจำลอง)',108.19999999999999,16,62.0,G.site,1.8);
   makeTextLabel('เหนือ',14-.415*19,3,84+.91*19,G.site,1.8);
   makeTextLabel('กว้างประมาณ 50 ม.',0,1.8,-25,G.dims);
