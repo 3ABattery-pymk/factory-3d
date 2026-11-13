@@ -43,6 +43,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
 .tag{font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
 .tag.ok{color:#9fe0b4;border-color:#3a7a52}
 .tag.est{color:#f3cf8a;border-color:#8a6d2f}
+.loc{margin:0 0 8px;color:#d3dfe6;font-size:14px}
 .note{margin:0;color:var(--muted);font-size:12.5px}
 .hint{position:absolute;left:12px;bottom:12px;background:rgba(15,30,41,.78);color:var(--text);font-size:12.5px;padding:6px 10px;border-radius:6px;pointer-events:none}
 @media (max-width:760px){
@@ -63,6 +64,12 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
     </header>
 
     <section>
+      <h2>ที่ตั้งโดยประมาณ</h2>
+      <p class="loc">อาคารนี้อยู่ด้านเหนือของพื้นที่บริษัท ใกล้ถนนพระราม 2 ซึ่งอยู่ทางขวามือเมื่อยืนหน้าอาคารตามภาพถ่าย ส่วนอาคารอื่นของบริษัทต่อไปทางซ้าย และมีคลองอยู่ด้านหลังอาคาร</p>
+      <p class="loc"><span class="tag est">ประมาณ</span> อ่านจากพิกัด GPS ของภาพถ่ายภายนอกเทียบกับแผนที่ดาวเทียม ยังไม่ได้ยืนยันกับผู้ที่รู้จักพื้นที่ ระยะห่างจากถนนเป็นการประมาณ</p>
+    </section>
+
+    <section>
       <h2>การแสดงอาคาร</h2>
       <div class="seg" id="modes">
         <button data-mode="solid" aria-pressed="true">ทึบ</button>
@@ -74,6 +81,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
     <section>
       <h2>มุมกล้อง</h2>
       <div class="seg" id="views">
+        <button data-view="site">ที่ตั้งและถนน</button>
         <button data-view="outside">ภายนอก</button>
         <button data-view="inside">ภายใน</button>
         <button data-view="top">มุมบน</button>
@@ -86,6 +94,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline
       <label class="chk"><input type="checkbox" data-layer="mezz" checked> ชั้นลอยเดิม</label>
       <label class="chk"><input type="checkbox" data-layer="vehicles" checked> รถและตู้คอนเทนเนอร์</label>
       <label class="chk"><input type="checkbox" data-layer="proposed" checked> พื้นที่ใหม่ตามลายมือ</label>
+      <label class="chk"><input type="checkbox" data-layer="site" checked> ถนนพระราม 2 คลอง และอาคารข้างเคียง</label>
       <label class="chk"><input type="checkbox" data-layer="dims"> ขนาดโดยประมาณ (เส้นบอกระยะ)</label>
     </section>
 
@@ -133,17 +142,17 @@ renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 stage.insertBefore(renderer.domElement,stage.firstChild);
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0xbcd6e6);
-scene.fog=new THREE.Fog(0xbcd6e6,170,420);
-const camera=new THREE.PerspectiveCamera(45,1,0.5,900);
-camera.position.set(-48,14,74);
+scene.fog=new THREE.Fog(0xbcd6e6,230,560);
+const camera=new THREE.PerspectiveCamera(45,1,0.5,1200);
+camera.position.set(-40,82,140);
 const controls=new THREE.OrbitControls(camera,renderer.domElement);
-controls.target.set(6,5,14);
+controls.target.set(55,0,2);
 controls.enableDamping=true;controls.dampingFactor=.08;
-controls.maxPolarAngle=Math.PI/2.02;controls.minDistance=8;controls.maxDistance=240;
+controls.maxPolarAngle=Math.PI/2.02;controls.minDistance=8;controls.maxDistance=330;
 scene.add(new THREE.HemisphereLight(0xffffff,0x7d8c97,0.55));
 const sun=new THREE.DirectionalLight(0xffffff,0.78);sun.position.set(-60,90,70);
 sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.bias=-0.0006;
-Object.assign(sun.shadow.camera,{left:-115,right:115,top:115,bottom:-115,near:10,far:300});scene.add(sun);
+Object.assign(sun.shadow.camera,{left:-150,right:150,top:150,bottom:-150,near:10,far:380});scene.add(sun);
 
 /* ---------- helpers ---------- */
 const UB=new THREE.BoxGeometry(1,1,1);
@@ -154,14 +163,15 @@ function cyl(r,h,m,x,y,z,parent,rot){const o=new THREE.Mesh(new THREE.CylinderGe
 const UC=new THREE.CylinderGeometry(1,1,1,6),Y_UP=new THREE.Vector3(0,1,0);
 function beam(a,b,r,m,parent){const A=new THREE.Vector3(a[0],a[1],a[2]),B=new THREE.Vector3(b[0],b[1],b[2]),d=B.clone().sub(A),len=d.length();const o=new THREE.Mesh(UC,m);o.scale.set(r,len,r);o.position.copy(A).add(B).multiplyScalar(.5);o.quaternion.setFromUnitVectors(Y_UP,d.normalize());(parent||scene).add(o);return o;}
 function lineSeg(pts,color){return new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color}));}
-const G={};['facade','interior','truss','roofskin','zones','mezz','vehicles','proposed','labels','yard','dims'].forEach(k=>{G[k]=new THREE.Group();scene.add(G[k]);});
+const G={};['facade','interior','truss','roofskin','zones','mezz','vehicles','proposed','labels','yard','dims','site'].forEach(k=>{G[k]=new THREE.Group();scene.add(G[k]);});
+const clock=new THREE.Clock(),traffic=[];
 let seed=7;function rnd(){seed=(seed*16807)%2147483647;return seed/2147483647;}
 
 /* ---------- ground and yard ---------- */
 box(900,.2,900,mat(0x8fae8a),0,-.4,0,G.yard);
 box(150,.2,120,mat(0x9c9fa0),0,-.1,32,G.yard);
-box(150,.2,70,mat(0x9c9fa0),0,-.1,-45,G.yard);
-for(let i=0;i<16;i++){const tr=new THREE.Group(),s=.8+rnd()*.7;cyl(.35,3,mat(0x5a4632),0,1.5,0,tr);const c=new THREE.Mesh(new THREE.ConeGeometry(2.4,6,10),mat(i%3?0x3d7a47:0x4f8a4a));c.position.y=5.5;tr.add(c);tr.scale.setScalar(s);tr.position.set(-80-rnd()*28,0,-10+rnd()*70);G.yard.add(tr);}
+box(150,.2,18,mat(0x9c9fa0),0,-.1,-19,G.yard);
+for(let i=0;i<16;i++){const tr=new THREE.Group(),s=.8+rnd()*.7;cyl(.35,3,mat(0x5a4632),0,1.5,0,tr);const c=new THREE.Mesh(new THREE.ConeGeometry(2.4,6,10),mat(i%3?0x3d7a47:0x4f8a4a));c.position.y=5.5;tr.add(c);tr.scale.setScalar(s);tr.position.set(-60-rnd()*70,0,98+rnd()*40);G.yard.add(tr);}
 
 /* ---------- main building shell (arched roof) ---------- */
 const prof=new THREE.Shape();
@@ -387,6 +397,46 @@ function machine(x,z,w,d,h){const g=new THREE.Group();
   G.dims.visible=false;
 })();
 
+/* ---------- site: Rama 2 road, canal, neighbouring halls, compass ---------- */
+function car(col,len,h){const g=new THREE.Group();box(1.9,.8,len,mat(col),0,.6,0,g);box(1.7,h||.7,len*.5,mat(0xcfe3ee),0,1.25,-len*.05,g);
+  for(const s of [-1,1])for(const q of [-.32,.32])cyl(.32,.25,tyreM,s*.9,.32,q*len,g,[0,0,Math.PI/2]);return g;}
+function truckV(col){const g=new THREE.Group();box(2.5,3,9,mat(col),0,2.1,-1.5,g);box(2.5,2.2,2.2,mat(0x22324a),0,1.7,3.6,g);
+  for(const s of [-1,1])for(const q of [-3.5,-1.5,3.4])cyl(.5,.35,tyreM,s*1.15,.5,q,g,[0,0,Math.PI/2]);return g;}
+(function(){
+  const S=G.site,asph=mat(0x3b4045),conc=mat(0xb9bbbb),white=mat(0xf4f4ef);
+  box(52,.06,380,mat(0x9a9d9b),118,.01,0,S);
+  [[101,10],[115,14],[133,14]].forEach(([cx,w])=>box(w,.1,380,asph,cx,.05,0,S));
+  box(2,.8,380,conc,107,.4,0,S);
+  box(4,.5,380,mat(0x6f9d6a),124,.25,0,S);
+  [97,105,108.5,121.5,126.5,139.5].forEach(x=>box(.15,.02,380,white,x,.115,0,S));
+  const dm=new THREE.Object3D(),lanes=[101,112.7,117.3,130.7,135.3],dash=new THREE.InstancedMesh(UB,white,lanes.length*62);let k=0;
+  lanes.forEach(x=>{for(let z=-180;z<=180;z+=6){dm.position.set(x,.115,z);dm.scale.set(.15,.02,2.5);dm.updateMatrix();dash.setMatrixAt(k++,dm.matrix);}});
+  dash.count=k;S.add(dash);
+  for(let z=-165;z<=165;z+=30){beam([124,0,z],[124,9,z],.12,mat(0x555d63),S);box(7,.12,.3,mat(0x555d63),124,9.1,z,S);}
+  // gantry for the road sign
+  const gz=-34,gm=mat(0x6a747a);
+  beam([106.5,0,gz],[106.5,7.6,gz],.2,gm,S);beam([141,0,gz],[141,7.6,gz],.2,gm,S);beam([106.5,7.4,gz],[141,7.4,gz],.18,gm,S);
+  // traffic: left-hand driving; WSW-bound (-z) on the near carriageway, ENE-bound (+z) on the far one
+  const cols=[0xd9d9d9,0x2b4a8c,0xb02a2a,0x1c1c1c,0xe0b030,0x3d7a47,0xf0f0f0];let ci=0;
+  [[110.4,-1],[115,-1],[119.6,-1],[128.4,1],[133,1],[137.6,1],[99,-1],[103,1]].forEach(([x,dir],i)=>{
+    const n=i<6?3:1;
+    for(let j=0;j<n;j++){const big=(i+j)%4===2,g=big?truckV([0xc9a46c,0x2f6fdc,0xe0e0e0][j%3]):car(cols[ci++%cols.length],4.2);
+      g.position.set(x,.1,-170+j*115+i*13);g.rotation.y=dir>0?0:Math.PI;S.add(g);traffic.push({g,dir,speed:(i<6?14:7)+j*2.5});}});
+  // canal behind the building
+  box(200,.05,34,mat(0x4e8199),-10,-.28,-45,G.yard);
+  // neighbouring halls of the compound (towards the south-south-east)
+  function hall(x0,x1,z0,z1,h,col){box(x1-x0,h,z1-z0,mat(col),(x0+x1)/2,h/2,(z0+z1)/2,S);
+    box(x1-x0-1,.2,z1-z0-1,mat(0x1f3150),(x0+x1)/2,h+.1,(z0+z1)/2,S);
+    const pts=[];for(let x=x0+2;x<x1-1;x+=3)pts.push(new THREE.Vector3(x,h+.22,z0+.8),new THREE.Vector3(x,h+.22,z1-.8));
+    for(let z=z0+3;z<z1-1;z+=3)pts.push(new THREE.Vector3(x0+.8,h+.22,z),new THREE.Vector3(x1-.8,h+.22,z));
+    S.add(lineSeg(pts,0x5a7aa8));}
+  hall(-112,-54,-52,-4,11,0xaeb6bb);hall(-112,-54,6,56,9,0xb6bcc0);
+  // compass arrow on the yard, pointing north (north = +x and slightly +z in model axes)
+  const n=new THREE.Vector3(.94,0,.342),a=new THREE.Vector3(-46,.3,72),b=a.clone().add(n.clone().multiplyScalar(14));
+  beam([a.x,a.y,a.z],[b.x,b.y,b.z],.25,mat(0xd23a2e),S);
+  const tip=new THREE.Mesh(new THREE.ConeGeometry(.9,2.6,8),mat(0xd23a2e));tip.position.copy(b);tip.quaternion.setFromUnitVectors(Y_UP,n);S.add(tip);
+})();
+
 /* ---------- zone overlays, proposed areas ---------- */
 const zoneObj={};
 function floorZone(id,x0,x1,z0,z1,y,parent,opacity){
@@ -428,14 +478,30 @@ function makeLabel(id,text,x,y,z){
   s.scale.set(c.width/38,c.height/38,1);s.position.set(x,y,z);s.renderOrder=20;s.userData.zone=id;
   G.labels.add(s);labelList.push(s);
 }
-function makeTextLabel(text,x,y,z,parent){
-  const c=document.createElement('canvas');c.width=420;c.height=96;const g=c.getContext('2d');
-  g.font='600 40px "IBM Plex Sans Thai",sans-serif';const w=Math.min(410,g.measureText(text).width+50),x0=(c.width-w)/2;
-  g.fillStyle='rgba(255,255,255,.92)';g.fillRect(x0,12,w,72);g.fillStyle='#10202b';g.textBaseline='middle';g.fillText(text,x0+25,49);
+function makeTextLabel(text,x,y,z,parent,k){k=k||1;
+  const mc=document.createElement('canvas').getContext('2d');mc.font='600 40px "IBM Plex Sans Thai",sans-serif';
+  const w=Math.ceil(mc.measureText(text).width)+50;
+  const c=document.createElement('canvas');c.width=w;c.height=96;const g=c.getContext('2d');
+  g.font='600 40px "IBM Plex Sans Thai",sans-serif';
+  g.fillStyle='rgba(255,255,255,.92)';g.fillRect(0,12,w,72);g.fillStyle='#10202b';g.textBaseline='middle';g.fillText(text,25,49);
   const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),depthTest:false,transparent:true}));
-  s.scale.set(c.width/42,c.height/42,1);s.position.set(x,y,z);s.renderOrder=20;parent.add(s);
+  s.scale.set(c.width/42*k,c.height/42*k,1);s.position.set(x,y,z);s.renderOrder=20;parent.add(s);
+}
+function roadSign(x,rotY){
+  const c=document.createElement('canvas');c.width=640;c.height=180;const g=c.getContext('2d');
+  g.fillStyle='#0f7a45';g.fillRect(0,0,640,180);g.strokeStyle='#fff';g.lineWidth=6;g.strokeRect(8,8,624,164);
+  g.fillStyle='#fff';g.textBaseline='middle';g.textAlign='center';
+  g.font='600 62px "IBM Plex Sans Thai",sans-serif';g.fillText('ถนนพระรามที่ 2',320,66);
+  g.font='600 40px "IBM Plex Sans Thai",sans-serif';g.fillText('ทางหลวงหมายเลข 35',320,129);
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(10,2.8),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c)}));
+  m.position.set(x,5.9,-34);m.rotation.y=rotY;G.site.add(m);
 }
 function buildLabels(){
+  roadSign(115,0);roadSign(133,Math.PI);
+  makeTextLabel('ถนนพระราม 2 (ทางหลวง 35)',118,12,6,G.site,2.2);
+  makeTextLabel('คลอง Tha Raeng',40,3,-45,G.site,1.8);
+  makeTextLabel('อาคารอื่นของ AAI (ประมาณ)',-83,16,-28,G.site,1.8);
+  makeTextLabel('เหนือ',-46+.94*19,3,72+.342*19,G.site,1.8);
   makeTextLabel('กว้างประมาณ 60 ม.',0,1.8,-25,G.dims);
   makeTextLabel('ลึกประมาณ 40 ม.',-48,1.8,0,G.dims);
   makeTextLabel('สูงสุดประมาณ 14 ม.',-31.5,15.2,-23,G.dims);
@@ -466,7 +532,7 @@ document.querySelectorAll('[data-layer]').forEach(i=>i.addEventListener('change'
 }));
 let tween=null;
 function flyTo(pos,tgt){tween={p:new THREE.Vector3(...pos),t:new THREE.Vector3(...tgt)};}
-const VIEWS={outside:[[-48,14,74],[6,5,14]],inside:[[0,5.5,18.5],[-18,3,-8]],top:[[0,125,2],[0,0,0]]};
+const VIEWS={site:[[-40,82,140],[55,0,2]],outside:[[-48,14,74],[6,5,14]],inside:[[0,5.5,18.5],[-18,3,-8]],top:[[0,125,2],[0,0,0]]};
 document.querySelectorAll('#views button').forEach(b=>b.addEventListener('click',()=>{
   const v=VIEWS[b.dataset.view];flyTo(v[0],v[1]);
   if(b.dataset.view==='inside')setMode('solid');
@@ -521,6 +587,8 @@ const reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     camera.position.lerp(tween.p,k);controls.target.lerp(tween.t,k);
     if(camera.position.distanceTo(tween.p)<.1&&controls.target.distanceTo(tween.t)<.1)tween=null;
   }
+  const dt=Math.min(clock.getDelta(),.1);
+  if(!reduce)for(const v of traffic){v.g.position.z+=v.dir*v.speed*dt;if(v.g.position.z>180)v.g.position.z=-180;if(v.g.position.z<-180)v.g.position.z=180;}
   controls.update();renderer.render(scene,camera);
 })();
 scene.traverse(o=>{if(o.isMesh&&o!==shell){const m=o.material;if(!(m.transparent&&m.depthWrite===false)){o.castShadow=true;o.receiveShadow=true;}}});
